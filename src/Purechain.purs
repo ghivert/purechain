@@ -22,3 +22,14 @@ addBlock content (Purechain Nil) = genesis content
 addBlock content (Purechain ((Block hd) : tl)) = do
   block <- newBlock content hd.hash
   pure $ Purechain $ block : Block hd : tl
+
+isValid :: Purechain -> Boolean
+isValid (Purechain Nil) = true
+isValid (Purechain (hd : Nil)) = true
+isValid (Purechain (first : second : tl)) =
+  let Block { timestamp, content, hash } = first
+      Block second = second in
+  if hash == calculateHash second.hash timestamp content then
+    isValid $ Purechain tl
+  else
+    false

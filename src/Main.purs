@@ -12,6 +12,7 @@ main = do
   purechain <- P.addBlock "Yo im the second block" purechain
   purechain <- P.addBlock "Hey im the third block" purechain
   log $ show purechain
+  log $ show $ P.isValid purechain
 
   -- log $ "Hash for block 1 : " <> genesisBlock.hash
   -- log $ "Hash for block 2 : " <> secondBlock.hash

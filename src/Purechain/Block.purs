@@ -13,7 +13,6 @@ import Crypto.Simple as Crypto
 newtype Block =
   Block
     { hash :: String
-    , previousHash :: String
     , content :: String
     , timestamp :: Number
     }
@@ -25,10 +24,7 @@ instance showBlock :: Show Block where
 block :: String -> String -> Number -> Block
 block previousHash content timestamp =
   Block
-    { hash: Crypto.toString
-        $ Crypto.hash Crypto.SHA256
-        $ previousHash <> toString timestamp <> content
-    , previousHash: previousHash
+    { hash: calculateHash previousHash timestamp content
     , content: content
     , timestamp: timestamp
     }
@@ -38,3 +34,9 @@ newBlock content previousHash = do
   time <- now
   let (Milliseconds timestamp) = unInstant time
   pure (block previousHash content timestamp)
+
+calculateHash :: String -> Number -> String -> String
+calculateHash previousHash timestamp content =
+  Crypto.toString
+    $ Crypto.hash Crypto.SHA256
+    $ previousHash <> toString timestamp <> content
