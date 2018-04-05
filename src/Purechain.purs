@@ -32,9 +32,15 @@ isValid :: Purechain -> Boolean
 isValid (Purechain Nil) = true
 isValid (Purechain (hd : Nil)) = true
 isValid (Purechain (first : second : tl)) =
-  let Block { timestamp, content, hash, nonce } = first
+  let Block { timestamp, content, hash, nonce, previousHash } = first
       Block second = second in
-  if hash == calculateHash second.hash timestamp nonce content then
-    isValid $ Purechain tl
+  if hash == calculateHash previousHash timestamp nonce content then
+    if second.hash == previousHash then
+      if checkValidHash difficulty hash then
+        isValid $ Purechain tl
+      else
+        false
+    else
+      false
   else
     false

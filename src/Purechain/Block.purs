@@ -1,18 +1,17 @@
 module Purechain.Block where
 
+import Crypto.Simple as Crypto
 import Control.Monad.Eff
 import Control.Monad.Eff.Console
 import Control.Monad.Eff.Now
 import Control.Monad.Eff.Unsafe
 import Data.DateTime.Instant
+import Data.Int
 import Data.Number.Format
+import Data.String
 import Data.Time.Duration
 import Data.Array as A
-import Data.String
-import Data.Int
-import Crypto.Simple as Crypto
 import Prelude
-
 
 newtype Block =
   Block
@@ -51,8 +50,7 @@ calculateHash previousHash timestamp nonce content =
 
 mineBlock :: Int -> Block -> Block
 mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
-  let target = A.replicate difficulty '0' # fromCharArray in
-  if take difficulty hash == target then
+  if checkValidHash difficulty hash then
     unsafePerformEff do
       time <- now
       let (Milliseconds timestamp) = unInstant time
@@ -64,3 +62,8 @@ mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previous
       { hash = calculateHash previousHash timestamp newNonce content
       , nonce = newNonce
       }
+
+checkValidHash :: Int -> String -> Boolean
+checkValidHash difficulty hash =
+  let target = A.replicate difficulty '0' # fromCharArray in
+  take difficulty hash == target
