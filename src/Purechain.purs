@@ -12,24 +12,29 @@ newtype Purechain =
 instance showPurechain :: Show Purechain where
   show (Purechain blocks) = show blocks
 
+difficulty :: Int
+difficulty = 5
+
 genesis :: ∀ e. String -> Eff (now :: NOW | e) Purechain
 genesis content = do
   genesisBlock <- newBlock content "0"
-  pure $ Purechain $ singleton genesisBlock
+  let minedBlock = mineBlock difficulty genesisBlock
+  pure $ Purechain $ singleton minedBlock
 
 addBlock :: ∀ e. String -> Purechain -> Eff (now :: NOW | e) Purechain
 addBlock content (Purechain Nil) = genesis content
 addBlock content (Purechain ((Block hd) : tl)) = do
   block <- newBlock content hd.hash
-  pure $ Purechain $ block : Block hd : tl
+  let minedBlock = mineBlock difficulty block
+  pure $ Purechain $ minedBlock : Block hd : tl
 
 isValid :: Purechain -> Boolean
 isValid (Purechain Nil) = true
 isValid (Purechain (hd : Nil)) = true
 isValid (Purechain (first : second : tl)) =
-  let Block { timestamp, content, hash } = first
+  let Block { timestamp, content, hash, nonce } = first
       Block second = second in
-  if hash == calculateHash second.hash timestamp content then
+  if hash == calculateHash second.hash timestamp nonce content then
     isValid $ Purechain tl
   else
     false

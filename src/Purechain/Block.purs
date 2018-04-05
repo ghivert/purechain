@@ -1,18 +1,24 @@
 module Purechain.Block where
 
 import Control.Monad.Eff
+import Control.Monad.Eff.Console
 import Control.Monad.Eff.Now
+import Control.Monad.Eff.Unsafe
 import Data.DateTime.Instant
 import Data.Number.Format
 import Data.Time.Duration
+import Data.Array as A
+import Data.String
+import Data.Int
+import Crypto.Simple as Crypto
 import Prelude
 
-import Control.Monad.Eff.Unsafe
-import Crypto.Simple as Crypto
 
 newtype Block =
   Block
     { hash :: String
+    , previousHash :: String
+    , nonce :: Int
     , content :: String
     , timestamp :: Number
     }
@@ -21,10 +27,12 @@ derive instance eqBlock :: Eq Block
 instance showBlock :: Show Block where
   show (Block { hash }) = "Hash: " <> hash
 
-block :: String -> String -> Number -> Block
-block previousHash content timestamp =
+block :: String -> String -> Number -> Int -> Block
+block previousHash content timestamp nonce =
   Block
-    { hash: calculateHash previousHash timestamp content
+    { hash: calculateHash previousHash timestamp nonce content
+    , previousHash: previousHash
+    , nonce: nonce
     , content: content
     , timestamp: timestamp
     }
@@ -33,10 +41,26 @@ newBlock :: ∀ e. String -> String -> Eff (now :: NOW | e) Block
 newBlock content previousHash = do
   time <- now
   let (Milliseconds timestamp) = unInstant time
-  pure (block previousHash content timestamp)
+  pure (block previousHash content timestamp 0)
 
-calculateHash :: String -> Number -> String -> String
-calculateHash previousHash timestamp content =
+calculateHash :: String -> Number -> Int -> String -> String
+calculateHash previousHash timestamp nonce content =
   Crypto.toString
     $ Crypto.hash Crypto.SHA256
-    $ previousHash <> toString timestamp <> content
+    $ previousHash <> toString timestamp <> toStringAs decimal nonce <> content
+
+mineBlock :: Int -> Block -> Block
+mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
+  let target = A.replicate difficulty '0' # fromCharArray in
+  if take difficulty hash == target then
+    unsafePerformEff do
+      time <- now
+      let (Milliseconds timestamp) = unInstant time
+      log $ "Block mined! " <> toString timestamp
+      pure $ Block block
+  else
+    let newNonce = nonce + 1 in
+    mineBlock difficulty $ Block $ block
+      { hash = calculateHash previousHash timestamp newNonce content
+      , nonce = newNonce
+      }
