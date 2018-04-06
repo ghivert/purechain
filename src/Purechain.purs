@@ -6,8 +6,7 @@ import Control.Monad.Eff
 import Control.Monad.Eff.Now
 import Data.List
 
-newtype Purechain =
-  Purechain (List Block)
+newtype Purechain = Purechain (List Block)
 
 instance showPurechain :: Show Purechain where
   show (Purechain blocks) = show blocks

@@ -13,14 +13,13 @@ import Data.Time.Duration
 import Data.Array as A
 import Prelude
 
-newtype Block =
-  Block
-    { hash :: String
-    , previousHash :: String
-    , nonce :: Int
-    , content :: String
-    , timestamp :: Number
-    }
+newtype Block = Block
+  { hash :: String
+  , previousHash :: String
+  , nonce :: Int
+  , content :: String
+  , timestamp :: Number
+  }
 
 derive instance eqBlock :: Eq Block
 instance showBlock :: Show Block where
