@@ -1,10 +1,11 @@
 module Purechain where
 
 import Prelude
-import Purechain.Block
+import Data.List
 import Control.Monad.Eff
 import Control.Monad.Eff.Now
-import Data.List
+
+import Purechain.Block
 
 newtype Purechain = Purechain (List Block)
 

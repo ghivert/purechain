@@ -4,6 +4,7 @@ import Prelude
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, log)
 import Control.Monad.Eff.Now
+
 import Purechain as P
 
 main :: ∀ e. Eff (console :: CONSOLE, now :: NOW | e) Unit

@@ -1,16 +1,14 @@
 module Purechain.Transaction where
 
-import Control.Monad.Eff
-import Crypto.Simple
-import Data.DateTime.Instant
+import Prelude
+import Data.Number.Format as Format
 import Data.Maybe
 import Data.Time.Duration
-import Data.Number
-import Data.Number.Format as Format
-import Prelude
-
+import Data.DateTime.Instant
+import Control.Monad.Eff
 import Control.Monad.Eff.Now as Now
-import Crypto.Simple as Crypto
+import Crypto.Simple
+
 import Purechain.Transaction.Input as Input
 import Purechain.Transaction.Output as Output
 

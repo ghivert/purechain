@@ -1,17 +1,18 @@
 module Purechain.Block where
 
-import Crypto.Simple as Crypto
+import Prelude
+import Data.Int
+import Data.String
+import Data.Array as A
+import Data.Number.Format
+import Data.DateTime.Instant
+import Data.Time.Duration
 import Control.Monad.Eff
 import Control.Monad.Eff.Console
 import Control.Monad.Eff.Now
 import Control.Monad.Eff.Unsafe
-import Data.DateTime.Instant
-import Data.Int
-import Data.Number.Format
-import Data.String
-import Data.Time.Duration
-import Data.Array as A
-import Prelude
+
+import Crypto.Simple as Crypto
 
 newtype Block = Block
   { hash :: String

@@ -1,9 +1,9 @@
 module Purechain.Wallet where
 
 import Prelude
-import Crypto.Simple
 import Control.Monad
 import Control.Monad.Eff
+import Crypto.Simple
 
 newtype Wallet = Wallet
   { privateKey :: PrivateKey
