@@ -1,7 +1,6 @@
 module Purechain.Wallet where
 
 import Prelude
-import Control.Monad
 import Control.Monad.Eff
 import Crypto.Simple
 

@@ -15,18 +15,17 @@ import Control.Monad.Eff.Unsafe
 import Crypto.Simple as Crypto
 
 newtype Block = Block
-  { hash :: String
-  , previousHash :: String
+  { hash :: Crypto.Digest
+  , previousHash :: Crypto.Digest
   , nonce :: Int
   , content :: String
   , timestamp :: Number
   }
 
-derive instance eqBlock :: Eq Block
 instance showBlock :: Show Block where
-  show (Block { hash }) = "Hash: " <> hash
+  show (Block { hash }) = "Hash: " <> Crypto.toString hash
 
-block :: String -> String -> Number -> Int -> Block
+block :: Crypto.Digest -> String -> Number -> Int -> Block
 block previousHash content timestamp nonce =
   Block
     { hash: calculateHash previousHash timestamp nonce content
@@ -36,17 +35,16 @@ block previousHash content timestamp nonce =
     , timestamp: timestamp
     }
 
-newBlock :: ∀ e. String -> String -> Eff (now :: NOW | e) Block
+newBlock :: ∀ e. String -> Crypto.Digest -> Eff (now :: NOW | e) Block
 newBlock content previousHash = do
   time <- now
   let (Milliseconds timestamp) = unInstant time
   pure (block previousHash content timestamp 0)
 
-calculateHash :: String -> Number -> Int -> String -> String
+calculateHash :: Crypto.Digest -> Number -> Int -> String -> Crypto.Digest
 calculateHash previousHash timestamp nonce content =
-  Crypto.toString
-    $ Crypto.hash Crypto.SHA256
-    $ previousHash <> toString timestamp <> toStringAs decimal nonce <> content
+  Crypto.hash Crypto.SHA256
+    $ Crypto.toString previousHash <> toString timestamp <> toStringAs decimal nonce <> content
 
 mineBlock :: Int -> Block -> Block
 mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
@@ -63,7 +61,7 @@ mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previous
       , nonce = newNonce
       }
 
-checkValidHash :: Int -> String -> Boolean
+checkValidHash :: Int -> Crypto.Digest -> Boolean
 checkValidHash difficulty hash =
   let target = A.replicate difficulty '0' # fromCharArray in
-  take difficulty hash == target
+  take difficulty (Crypto.toString hash) == target
