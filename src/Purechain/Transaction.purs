@@ -1,14 +1,18 @@
 module Purechain.Transaction where
 
-import Prelude
-import Data.Number.Format as Format
+import Control.Monad.Eff
+import Crypto.Simple
+import Data.DateTime.Instant
 import Data.Maybe
 import Data.Time.Duration
-import Data.DateTime.Instant
-import Control.Monad.Eff
+import Prelude
+import Data.String as String
 import Control.Monad.Eff.Now as Now
-import Crypto.Simple
-
+import Data.Maybe as Maybe
+import Data.Number.Format as Format
+import Node.Buffer as Node
+import Node.Encoding as Node
+import Partial.Unsafe (unsafePartial)
 import Purechain.Transaction.Input as Input
 import Purechain.Transaction.Output as Output
 
@@ -39,6 +43,20 @@ newTransaction from to value inputs = do
     , inputs: inputs
     , outputs: []
     }
+
+transactionDigest :: Transaction -> Digest
+transactionDigest (Transaction { sender, recipient, inputs }) =
+  hash SHA256 $ toString sender <> toString recipient <> (String.joinWith "" $ map show inputs)
+
+signTransaction :: PrivateKey -> Transaction -> Transaction
+signTransaction privateKey transaction @ (Transaction content) =
+  Transaction $ content { signature = sign privateKey $ transactionDigest transaction }
+
+isValid :: Transaction -> Boolean
+isValid transaction @ (Transaction { signature, sender }) =
+  case signature of
+    Nothing -> false
+    Just sig -> verify sender sig $ transactionDigest transaction
 
 calculateHash :: forall e
    . PublicKey

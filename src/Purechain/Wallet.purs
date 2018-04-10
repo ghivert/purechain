@@ -21,3 +21,9 @@ newWallet :: forall e. Eff (e) Wallet
 newWallet = do
   { private, public } <- generateKeyPair
   pure $ Wallet { privateKey: private, publicKey: public }
+
+publicKey :: Wallet -> PublicKey
+publicKey (Wallet { publicKey }) = publicKey
+
+privateKey :: Wallet -> PrivateKey
+privateKey (Wallet { privateKey }) = privateKey

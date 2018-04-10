@@ -6,9 +6,10 @@ import Data.List
 import Prelude
 import Purechain.Block
 
+import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import Crypto.Simple as Crypto
 import Data.Maybe as Maybe
-import Node.Buffer (BUFFER, fromString) as Node
+import Node.Buffer (fromString) as Node
 import Node.Encoding (Encoding(Hex)) as Node
 import Partial.Unsafe (unsafePartial)
 
@@ -20,17 +21,15 @@ instance showPurechain :: Show Purechain where
 difficulty :: Int
 difficulty = 5
 
-genesis :: ∀ e. String -> Eff (now :: NOW, buffer :: Node.BUFFER | e) Purechain
+genesis :: ∀ e. String -> Eff (now :: NOW | e) Purechain
 genesis content = do
-  buffer <- Node.fromString "0" Node.Hex
   genesisBlock <- newBlock content
-    $ unsafePartial
-    $ Maybe.fromJust
-    $ Crypto.importFromBuffer buffer
+    $ unsafePartial $ Maybe.fromJust $ Crypto.importFromBuffer
+    $ unsafePerformEff $ Node.fromString "0" Node.Hex
   let minedBlock = mineBlock difficulty genesisBlock
   pure $ Purechain $ singleton minedBlock
 
-addBlock :: ∀ e. String -> Purechain -> Eff (now :: NOW, buffer :: Node.BUFFER | e) Purechain
+addBlock :: ∀ e. String -> Purechain -> Eff (now :: NOW | e) Purechain
 addBlock content (Purechain Nil) = genesis content
 addBlock content (Purechain ((Block hd) : tl)) = do
   block <- newBlock content hd.hash
