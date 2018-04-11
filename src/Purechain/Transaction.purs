@@ -8,11 +8,7 @@ import Data.Time.Duration
 import Prelude
 import Data.String as String
 import Control.Monad.Eff.Now as Now
-import Data.Maybe as Maybe
 import Data.Number.Format as Format
-import Node.Buffer as Node
-import Node.Encoding as Node
-import Partial.Unsafe (unsafePartial)
 import Purechain.Transaction.Input as Input
 import Purechain.Transaction.Output as Output
 
@@ -43,6 +39,9 @@ newTransaction from to value inputs = do
     , inputs: inputs
     , outputs: []
     }
+
+instance showTransaction :: Show Transaction where
+  show (Transaction { id }) = show id
 
 transactionDigest :: Transaction -> Digest
 transactionDigest (Transaction { sender, recipient, inputs }) =

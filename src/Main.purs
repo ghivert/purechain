@@ -23,24 +23,24 @@ main = do
   log $ show $ T.isValid updatedTransaction
 
   -- Generate blockchain.
-  purechain <- P.genesis "Hi im the first block"
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
-  purechain <- P.addBlock "Yo im the second block" purechain
-  purechain <- P.addBlock "Hey im the third block" purechain
+  purechain <- P.genesis []
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
+  purechain <- P.addBlock [] purechain
   log $ show purechain
   log $ show $ P.isValid purechain
