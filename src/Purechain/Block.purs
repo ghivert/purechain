@@ -16,6 +16,7 @@ import Crypto.Simple as Crypto
 import Data.Array as A
 import Purechain.Transaction (Transaction, areValid, sendersHaveEnoughFunds)
 import Purechain.Transaction.Output as Transaction
+import HelpMe.Format
 
 newtype Block = Block
   { hash :: Crypto.Digest
@@ -30,7 +31,14 @@ hash :: Block -> String
 hash (Block { hash }) = Crypto.toString hash
 
 instance showBlock :: Show Block where
-  show (Block { hash }) = "Hash: " <> Crypto.toString hash
+  show (Block { hash, previousHash, nonce, content, timestamp, miner }) =
+    "Block {\n"
+      <> whitepad 2 <> "hash: " <> Crypto.toString hash <> "\n"
+      <> whitepad 2 <> "previousHash: " <> Crypto.toString previousHash <> "\n"
+      <> whitepad 2 <> "nonce: " <> show nonce <> "\n"
+      <> whitepad 2 <> "content: " <> show content <> "\n"
+      <> whitepad 2 <> "timestamp: " <> show timestamp <> "\n"
+      <> "}"
 
 block :: Crypto.Digest -> Array Transaction -> Number -> Int -> Block
 block previousHash content timestamp nonce = Block

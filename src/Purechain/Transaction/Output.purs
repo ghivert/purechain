@@ -6,7 +6,8 @@ import Crypto.Simple as Crypto
 import Data.Array (filter, foldr)
 
 newtype Output = Output
-  { receiver :: Crypto.PublicKey
+  { sender :: Crypto.PublicKey
+  , receiver :: Crypto.PublicKey
   , balance :: Number
   , txId :: String
   }
@@ -14,15 +15,17 @@ newtype Output = Output
 balance :: Output -> Number
 balance (Output { balance }) = balance
 
+derive instance eqOutput :: Eq Output
 instance showOutput :: Show Output where
   show (Output { receiver, balance, txId }) =
     "receiver: " <> Crypto.toString receiver
       <> " balance: " <> show balance
       <> " txId: " <> show txId
 
-output :: Crypto.PublicKey -> Number -> String -> Output
-output receiver balance txId = Output
-  { receiver: receiver
+output :: Crypto.PublicKey -> Crypto.PublicKey -> Number -> String -> Output
+output sender receiver balance txId = Output
+  { sender: sender
+  , receiver: receiver
   , balance: balance
   , txId: txId
   }

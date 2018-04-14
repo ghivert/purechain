@@ -23,18 +23,25 @@ newtype Transaction = Transaction
   , recipient :: PublicKey
   , value :: Number
   , signature :: Maybe Signature
+  , inputs :: Array Transaction.Output
   , outputs :: Array Transaction.Output
   }
 
-newTransaction :: forall e
+derive instance eqTransaction :: Eq Transaction
+
+-- | Creates a new transaction. Wait for sender, receiver,
+-- | how much to send and the actual utxo.
+newTransaction :: ∀ e
    . PublicKey
   -> PublicKey
   -> Number
   -> Array Transaction.Output
   -> Maybe (Eff (now :: Now.NOW | e ) Transaction)
 newTransaction from to value utxo =
-  let balance = Transaction.totalBalance from utxo in
-  if value <= balance then Just $ do
+  let balance = Transaction.totalBalance from utxo
+      result = balance - value in
+  if result < 0.0 then Nothing
+  else Just $ do
     transactionHash <- calculateHash from to value
     pure $ Transaction
       { id: transactionHash
@@ -42,10 +49,11 @@ newTransaction from to value utxo =
       , recipient: to
       , value: value
       , signature: Nothing
-      , outputs: []
+      , inputs : utxo
+      , outputs: append
+          [ Transaction.output from to value transactionHash ]
+          (if result == 0.0 then [] else [ Transaction.output from from (balance - value) transactionHash ])
       }
-  else
-    Nothing
 
 instance showTransaction :: Show Transaction where
   show (Transaction { id }) = show id
@@ -79,7 +87,7 @@ accumulateBalance :: Transaction -> Map.Map String Number -> Map.Map String Numb
 accumulateBalance (Transaction { value, sender }) map =
   Map.alter (maybe value ((+) value) >>> Just) (toString sender) map
 
-calculateHash :: forall e
+calculateHash :: ∀ e
    . PublicKey
   -> PublicKey
   -> Number

@@ -5,15 +5,13 @@ import Control.Monad.Eff.Now
 import Data.List
 import Prelude
 import Purechain.Block
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import Crypto.Simple as Crypto
 import Data.Maybe (Maybe(..), fromJust)
 import HelpMe.Buffer (importFromString) as Buffer
-import Node.Buffer (fromString) as Node
-import Node.Encoding (Encoding(Hex)) as Node
 import Partial.Unsafe (unsafePartial)
 import Purechain.Transaction (Transaction)
 import Purechain.Transaction.Output as Transaction
+import HelpMe.Format
 
 newtype Purechain = Purechain
   { chain :: List Block
@@ -24,7 +22,11 @@ utxo :: Purechain -> Array Transaction.Output
 utxo (Purechain { utxo }) = utxo
 
 instance showPurechain :: Show Purechain where
-  show (Purechain { chain }) = show chain
+  show (Purechain { chain, utxo }) =
+    "Purechain {\n"
+      <> whitepad 2 <> "chain: " <> show chain <> "\n"
+      <> whitepad 2 <> "utxo: " <> show utxo <> "\n"
+      <> "}"
 
 difficulty :: Int
 difficulty = 3
@@ -33,7 +35,7 @@ genesis :: ∀ e. Crypto.PublicKey -> Eff (now :: NOW | e) Purechain
 genesis miner = do
   genesisBlock <- unsafePartial $ fromJust $ newBlock [] [] (Buffer.importFromString "0")
   let minedBlock = mineBlock difficulty miner genesisBlock
-  pure $ Purechain { chain: singleton minedBlock, utxo: [ Transaction.output miner 5.0 "0" ] }
+  pure $ Purechain { chain: singleton minedBlock, utxo: [ Transaction.output miner miner 5.0 "0" ] }
 
 addBlock :: ∀ e. Crypto.PublicKey -> Array Transaction -> Purechain -> Eff (now :: NOW | e) Purechain
 addBlock miner content (Purechain { chain: Nil }) = genesis miner
