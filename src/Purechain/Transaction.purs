@@ -6,11 +6,16 @@ import Data.DateTime.Instant
 import Data.Maybe
 import Data.Time.Duration
 import Prelude
-import Data.String as String
+
 import Control.Monad.Eff.Now as Now
+import Data.Array (foldr)
+import Data.Foldable (and)
+import Data.Map as Map
 import Data.Number.Format as Format
-import Purechain.Transaction.Input as Input
-import Purechain.Transaction.Output as Output
+import Data.String as String
+import HelpMe.Buffer as HelpMe
+import Purechain.Transaction.Output (totalBalance)
+import Purechain.Transaction.Output as Transaction
 
 newtype Transaction = Transaction
   { id :: String
@@ -18,34 +23,36 @@ newtype Transaction = Transaction
   , recipient :: PublicKey
   , value :: Number
   , signature :: Maybe Signature
-  , inputs :: Array Input.Input
-  , outputs :: Array Output.Output
+  , outputs :: Array Transaction.Output
   }
 
 newTransaction :: forall e
    . PublicKey
   -> PublicKey
   -> Number
-  -> Array Input.Input
-  -> Eff (now :: Now.NOW | e ) Transaction
-newTransaction from to value inputs = do
-  transactionHash <- calculateHash from to value
-  pure $ Transaction
-    { id: transactionHash
-    , sender: from
-    , recipient: to
-    , value: value
-    , signature: Nothing
-    , inputs: inputs
-    , outputs: []
-    }
+  -> Array Transaction.Output
+  -> Maybe (Eff (now :: Now.NOW | e ) Transaction)
+newTransaction from to value utxo =
+  let balance = Transaction.totalBalance from utxo in
+  if value <= balance then Just $ do
+    transactionHash <- calculateHash from to value
+    pure $ Transaction
+      { id: transactionHash
+      , sender: from
+      , recipient: to
+      , value: value
+      , signature: Nothing
+      , outputs: []
+      }
+  else
+    Nothing
 
 instance showTransaction :: Show Transaction where
   show (Transaction { id }) = show id
 
 transactionDigest :: Transaction -> Digest
-transactionDigest (Transaction { sender, recipient, inputs }) =
-  hash SHA256 $ toString sender <> toString recipient <> (String.joinWith "" $ map show inputs)
+transactionDigest (Transaction { sender, recipient, outputs }) =
+  hash SHA256 $ toString sender <> toString recipient <> (String.joinWith "" $ map show outputs)
 
 signTransaction :: PrivateKey -> Transaction -> Transaction
 signTransaction privateKey transaction @ (Transaction content) =
@@ -56,6 +63,21 @@ isValid transaction @ (Transaction { signature, sender }) =
   case signature of
     Nothing -> false
     Just sig -> verify sender sig $ transactionDigest transaction
+
+areValid :: Array Transaction -> Boolean
+areValid transactions =
+  and $ map isValid transactions
+
+sendersHaveEnoughFunds :: Array Transaction -> Array Transaction.Output -> Boolean
+sendersHaveEnoughFunds transactions utxo =
+  let balances = foldr accumulateBalance Map.empty transactions
+      keys = map HelpMe.importFromString $ Map.keys balances
+      isBalanceSufficient key = totalBalance key utxo <= fromMaybe 0.0 (Map.lookup (toString key) balances) in
+    and $ map isBalanceSufficient keys
+
+accumulateBalance :: Transaction -> Map.Map String Number -> Map.Map String Number
+accumulateBalance (Transaction { value, sender }) map =
+  Map.alter (maybe value ((+) value) >>> Just) (toString sender) map
 
 calculateHash :: forall e
    . PublicKey

@@ -6,16 +6,16 @@ import Control.Monad.Eff.Now
 import Control.Monad.Eff.Unsafe
 import Data.DateTime.Instant
 import Data.Int
+import Data.Maybe
 import Data.Number.Format
 import Data.String
-import Data.String.NonEmpty as NonEmpty
 import Data.Time.Duration
 import Prelude
 
 import Crypto.Simple as Crypto
 import Data.Array as A
-import Data.String.NonEmpty (joinWith, unsafeFromString)
-import Purechain.Transaction (Transaction, transactionDigest)
+import Purechain.Transaction (Transaction, areValid, sendersHaveEnoughFunds)
+import Purechain.Transaction.Output as Transaction
 
 newtype Block = Block
   { hash :: Crypto.Digest
@@ -23,26 +23,38 @@ newtype Block = Block
   , nonce :: Int
   , content :: Array Transaction
   , timestamp :: Number
+  , miner :: Maybe Crypto.PublicKey
   }
+
+hash :: Block -> String
+hash (Block { hash }) = Crypto.toString hash
 
 instance showBlock :: Show Block where
   show (Block { hash }) = "Hash: " <> Crypto.toString hash
 
 block :: Crypto.Digest -> Array Transaction -> Number -> Int -> Block
-block previousHash content timestamp nonce =
-  Block
-    { hash: calculateHash previousHash timestamp nonce content
-    , previousHash: previousHash
-    , nonce: nonce
-    , content: content
-    , timestamp: timestamp
-    }
+block previousHash content timestamp nonce = Block
+  { hash: calculateHash previousHash timestamp nonce content
+  , previousHash: previousHash
+  , nonce: nonce
+  , content: content
+  , timestamp: timestamp
+  , miner: Nothing
+  }
 
-newBlock :: ∀ e. Array Transaction -> Crypto.Digest -> Eff (now :: NOW | e) Block
-newBlock content previousHash = do
-  time <- now
-  let (Milliseconds timestamp) = unInstant time
-  pure (block previousHash content timestamp 0)
+newBlock :: ∀ e
+   . Array Transaction
+  -> Array Transaction.Output
+  -> Crypto.Digest
+  -> Maybe (Eff (now :: NOW | e) Block)
+newBlock content utxo previousHash =
+  if areValid content then
+    if sendersHaveEnoughFunds content utxo then Just $ do
+      time <- now
+      let (Milliseconds timestamp) = unInstant time
+      pure $ block previousHash content timestamp 0
+    else Nothing
+  else Nothing
 
 calculateHash :: Crypto.Digest -> Number -> Int -> Array Transaction -> Crypto.Digest
 calculateHash previousHash timestamp nonce content =
@@ -52,17 +64,17 @@ calculateHash previousHash timestamp nonce content =
       <> toString timestamp
       <> toStringAs decimal nonce
 
-mineBlock :: Int -> Block -> Block
-mineBlock difficulty (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
+mineBlock :: Int -> Crypto.PublicKey -> Block -> Block
+mineBlock difficulty miner (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
   if checkValidHash difficulty hash then
     unsafePerformEff do
       time <- now
       let (Milliseconds timestamp) = unInstant time
       log $ "Block mined! " <> toString timestamp
-      pure $ Block block
+      pure $ Block block { miner = Just miner }
   else
     let newNonce = nonce + 1 in
-    mineBlock difficulty $ Block $ block
+    mineBlock difficulty miner $ Block $ block
       { hash = calculateHash previousHash timestamp newNonce content
       , nonce = newNonce
       }

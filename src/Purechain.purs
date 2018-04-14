@@ -5,20 +5,23 @@ import Control.Monad.Eff.Now
 import Data.List
 import Prelude
 import Purechain.Block
-
 import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import Crypto.Simple as Crypto
-import Data.Maybe as Maybe
+import Data.Maybe (Maybe(..), fromJust)
+import HelpMe.Buffer (importFromString) as Buffer
 import Node.Buffer (fromString) as Node
 import Node.Encoding (Encoding(Hex)) as Node
 import Partial.Unsafe (unsafePartial)
+import Purechain.Transaction (Transaction)
 import Purechain.Transaction.Output as Transaction
-import Purechain.Transaction(Transaction)
 
 newtype Purechain = Purechain
   { chain :: List Block
   , utxo :: Array Transaction.Output
   }
+
+utxo :: Purechain -> Array Transaction.Output
+utxo (Purechain { utxo }) = utxo
 
 instance showPurechain :: Show Purechain where
   show (Purechain { chain }) = show chain
@@ -26,20 +29,21 @@ instance showPurechain :: Show Purechain where
 difficulty :: Int
 difficulty = 3
 
-genesis :: ∀ e. Array Transaction -> Eff (now :: NOW | e) Purechain
-genesis content = do
-  genesisBlock <- newBlock content
-    $ unsafePartial $ Maybe.fromJust $ Crypto.importFromBuffer
-    $ unsafePerformEff $ Node.fromString "0" Node.Hex
-  let minedBlock = mineBlock difficulty genesisBlock
-  pure $ Purechain $ { chain: singleton minedBlock, utxo: [] }
+genesis :: ∀ e. Crypto.PublicKey -> Eff (now :: NOW | e) Purechain
+genesis miner = do
+  genesisBlock <- unsafePartial $ fromJust $ newBlock [] [] (Buffer.importFromString "0")
+  let minedBlock = mineBlock difficulty miner genesisBlock
+  pure $ Purechain { chain: singleton minedBlock, utxo: [ Transaction.output miner 5.0 "0" ] }
 
-addBlock :: ∀ e. Array Transaction -> Purechain -> Eff (now :: NOW | e) Purechain
-addBlock content (Purechain { chain: Nil }) = genesis content
-addBlock content (Purechain purechain @ { chain: ((Block hd) : tl) }) = do
-  block <- newBlock content hd.hash
-  let minedBlock = mineBlock difficulty block
-  pure $ Purechain $ purechain { chain = minedBlock : Block hd : tl }
+addBlock :: ∀ e. Crypto.PublicKey -> Array Transaction -> Purechain -> Eff (now :: NOW | e) Purechain
+addBlock miner content (Purechain { chain: Nil }) = genesis miner
+addBlock miner content (Purechain purechain @ { chain: (Block hd) : tl, utxo }) =
+  case newBlock content utxo $ hd.hash of
+    Nothing -> pure $ Purechain purechain
+    Just block -> do
+      notMinedBlock <- block
+      let minedBlock = mineBlock difficulty miner notMinedBlock
+      pure $ Purechain $ purechain { chain = minedBlock : Block hd : tl }
 
 isValid :: Purechain -> Boolean
 isValid (Purechain { chain: Nil }) = true
