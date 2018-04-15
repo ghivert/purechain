@@ -43,7 +43,7 @@ main = do
   log "First wallet after issuing transaction:"
   log $ show firstWallet
   let pendingTransactions = Wallet.pendingTransactions firstWallet
-
+  log $ show pendingTransactions
   -- Issue a new transaction by hand.
   -- case Purechain.newTransaction pubKey (Wallet.publicKey secondWallet) 5.0 (utxo purechain) of
   --   Nothing -> log "Not a transaction"
@@ -52,7 +52,7 @@ main = do
   --     let updatedTransaction = Purechain.signTransaction (Wallet.privateKey firstWallet) transaction
 
   -- And finally add it to the next block!
-  purechain <- addBlock pubKey pendingTransactions purechain
+  purechain' <- addBlock pubKey pendingTransactions purechain
 
   Console.logNewline
-  log $ show purechain
+  log $ show purechain'

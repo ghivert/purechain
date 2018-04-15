@@ -29,6 +29,9 @@ newtype Block = Block
 hash :: Block -> String
 hash (Block { hash }) = Crypto.toString hash
 
+transactions :: Block -> Array Transaction
+transactions (Block { content }) = content
+
 instance showBlock :: Show Block where
   show (Block { hash, previousHash, nonce, content, timestamp, miner }) =
     "Block {\n"

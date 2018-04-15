@@ -16,10 +16,11 @@ balance (Output { balance }) = balance
 
 derive instance eqOutput :: Eq Output
 instance showOutput :: Show Output where
-  show (Output { receiver, balance, txId }) =
-    "receiver: " <> Crypto.toString receiver
-      <> " balance: " <> show balance
-      <> " txId: " <> show txId
+  show (Output { sender, receiver, balance, txId }) =
+    "sender: " <> Crypto.toString sender
+      <> ", receiver: " <> Crypto.toString receiver
+      <> ", balance: " <> show balance
+      <> ", txId: " <> show txId
 
 output :: Crypto.PublicKey -> Crypto.PublicKey -> Number -> String -> Output
 output sender receiver balance txId = Output

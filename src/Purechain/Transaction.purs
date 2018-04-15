@@ -12,9 +12,11 @@ import Data.Foldable (and)
 import Data.Map as Map
 import Data.Number.Format as Format
 import Data.String as String
+import Text.Chalky as Chalk
 
 import Purechain.Transaction.Output as Transaction
 import HelpMe.Buffer as HelpMe
+import HelpMe.Format
 
 newtype Transaction = Transaction
   { id :: String
@@ -26,7 +28,11 @@ newtype Transaction = Transaction
   , outputs :: Array Transaction.Output
   }
 
-derive instance eqTransaction :: Eq Transaction
+inputs :: Transaction -> Array Transaction.Output
+inputs (Transaction { inputs }) = inputs
+
+outputs :: Transaction -> Array Transaction.Output
+outputs (Transaction { outputs }) = outputs
 
 -- | Creates a new transaction. Wait for sender, receiver,
 -- | how much to send and the actual utxo.
@@ -54,8 +60,19 @@ newTransaction from to value utxo =
           (if result == 0.0 then [] else [ Transaction.output from from (balance - value) transactionHash ])
       }
 
+derive instance eqTransaction :: Eq Transaction
+
 instance showTransaction :: Show Transaction where
-  show (Transaction { id }) = show id
+  show (Transaction { id, sender, recipient, value, signature, inputs, outputs }) =
+    "Transaction {\n"
+      <> whitepad 2 <> Chalk.red "id: " <> show id <> "\n"
+      <> whitepad 2 <> Chalk.red "sender: " <> toString sender <> "\n"
+      <> whitepad 2 <> Chalk.red "recipient: " <> toString recipient <> "\n"
+      <> whitepad 2 <> Chalk.red "value: " <> show value <> "\n"
+      <> whitepad 2 <> Chalk.red "signature: " <> (show $ toString <$> signature) <> "\n"
+      <> whitepad 2 <> Chalk.red "inputs: " <> show inputs <> "\n"
+      <> whitepad 2 <> Chalk.red "outputs: " <> show outputs <> "\n"
+      <> "}"
 
 transactionDigest :: Transaction -> Digest
 transactionDigest (Transaction { sender, recipient, outputs }) =
@@ -79,8 +96,8 @@ sendersHaveEnoughFunds :: Array Transaction -> Array Transaction.Output -> Boole
 sendersHaveEnoughFunds transactions utxo =
   let balances = foldr accumulateBalance Map.empty transactions
       keys = map HelpMe.importFromString $ Map.keys balances
-      isBalanceSufficient key = Transaction.totalBalance key utxo <= fromMaybe 0.0 (Map.lookup (toString key) balances) in
-    and $ map isBalanceSufficient keys
+      isBalanceSufficient key = Transaction.totalBalance key utxo >= fromMaybe 0.0 (Map.lookup (toString key) balances) in
+    and $ isBalanceSufficient <$> keys
 
 accumulateBalance :: Transaction -> Map.Map String Number -> Map.Map String Number
 accumulateBalance (Transaction { value, sender }) map =
