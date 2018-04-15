@@ -1,15 +1,15 @@
 module Purechain.Wallet where
 
+import Prelude
+import Crypto.Simple
 import Control.Monad.Eff
 import Control.Monad.Eff.Now
-import Crypto.Simple
 import Data.Maybe
-import Prelude
+import Data.Array
 
-import Data.Array ((:))
-import HelpMe.Format (whitepad)
 import Purechain.Transaction as Purechain
 import Purechain.Transaction.Output as Transaction
+import HelpMe.Format (whitepad)
 
 newtype Wallet = Wallet
   { privateKey :: PrivateKey
@@ -45,7 +45,21 @@ newWallet = do
     }
 
 addUTXO :: Wallet -> Transaction.Output -> Wallet
-addUTXO (Wallet wallet @ { utxo }) output = Wallet $ wallet { utxo = output : utxo }
+addUTXO (Wallet wallet @ { utxo, balance }) output =
+  Wallet $ wallet
+    { utxo = output : utxo
+    , balance = Transaction.balance output + balance
+    }
+
+removeUTXO :: Wallet -> Transaction.Output -> Wallet
+removeUTXO (Wallet wallet @ { utxo, balance }) output =
+  if elem output utxo then
+    Wallet $ wallet
+      { utxo = delete output utxo
+      , balance = balance - Transaction.balance output
+      }
+  else
+    Wallet wallet
 
 issueTransaction :: ∀ e. Wallet -> PublicKey -> Number -> Eff (now :: NOW | e) Wallet
 issueTransaction (Wallet wallet @ { publicKey, privateKey, utxo, pendingTransactions }) receiver value =

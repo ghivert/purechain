@@ -1,17 +1,23 @@
 module Main where
 
-import Control.Monad.Eff.Now
 import Prelude
-import Purechain
-
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
-import Control.Monad.Eff.Unsafe
+import Control.Monad.Eff
+import Control.Monad.Eff.Now
+import Control.Monad.Eff.Console
 import Partial.Unsafe
-import Data.Maybe as Maybe
 import Data.Array
+import Data.Maybe as Maybe
+import Text.Chalky as Colorize
+
+import Purechain
 import Purechain.Wallet as Wallet
 import HelpMe.Console as Console
+
+logYellow :: forall e. String -> Eff (console :: CONSOLE | e) Unit
+logYellow = log <<< Colorize.yellow
+
+logGreen :: forall e. String -> Eff (console :: CONSOLE | e) Unit
+logGreen = log <<< Colorize.green
 
 main :: ∀ e. Eff (console :: CONSOLE, now :: NOW | e) Unit
 main = do
@@ -21,11 +27,11 @@ main = do
   -- Generate wallets.
   firstWallet <- Wallet.newWallet
   secondWallet <- Wallet.newWallet
-  log "First wallet:"
-  log $ show firstWallet
+  logYellow "First wallet:"
+  logGreen $ show firstWallet
   Console.logNewline
-  log "Second wallet:"
-  log $ show secondWallet
+  logYellow "Second wallet:"
+  logGreen $ show secondWallet
   Console.logNewline
 
   -- Public Key of the first wallet, for better convenience.
@@ -35,10 +41,14 @@ main = do
   purechain <- genesis pubKey
 
   let firstWallet' = Wallet.addUTXO firstWallet (unsafePartial $ Maybe.fromJust $ head $ utxo purechain)
+  logYellow "First wallet after mining genesis:"
+  logGreen $ show firstWallet'
+  Console.logNewline
 
   -- Issue a transaction from the first wallet and get it.
   firstWallet <- Wallet.issueTransaction firstWallet' (Wallet.publicKey secondWallet) 2.5
-  log $ show firstWallet
+  logYellow "First wallet after issuing transaction:"
+  logGreen $ show firstWallet
   let pendingTransactions = Wallet.pendingTransactions firstWallet
 
   -- Issue a new transaction by hand.
@@ -52,4 +62,4 @@ main = do
   purechain <- addBlock pubKey pendingTransactions purechain
 
   Console.logNewline
-  log $ show purechain
+  logGreen $ show purechain
