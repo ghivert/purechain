@@ -6,6 +6,7 @@ import Control.Monad.Eff
 import Control.Monad.Eff.Now
 import Data.Maybe
 import Data.Array
+import Text.Chalky as Chalk
 
 import Purechain.Transaction as Purechain
 import Purechain.Transaction.Output as Transaction
@@ -26,11 +27,11 @@ derive instance eqWallet :: Eq Wallet
 instance showWallet :: Show Wallet where
   show (Wallet { privateKey, publicKey, balance, utxo, pendingTransactions }) =
     "Wallet {\n"
-      <> whitepad 2 <> "priv: " <> toString privateKey <> "\n"
-      <> whitepad 2 <> "publ: " <> toString publicKey <> "\n"
-      <> whitepad 2 <> "balance: " <> show balance <> "\n"
-      <> whitepad 2 <> "utxo: " <> show utxo <> "\n"
-      <> whitepad 2 <> "pendingTransactions: " <> show pendingTransactions <> "\n"
+      <> whitepad 2 <> Chalk.red "priv: " <> (Chalk.magenta $ toString privateKey) <> "\n"
+      <> whitepad 2 <> Chalk.red "publ: " <> (Chalk.magenta $ toString publicKey) <> "\n"
+      <> whitepad 2 <> Chalk.red "balance: " <> (Chalk.magenta $ show balance) <> "\n"
+      <> whitepad 2 <> Chalk.red "utxo: " <> show utxo <> "\n"
+      <> whitepad 2 <> Chalk.red "pendingTransactions: " <> show pendingTransactions <> "\n"
       <>"}"
 
 newWallet :: ∀ e. Eff (e) Wallet

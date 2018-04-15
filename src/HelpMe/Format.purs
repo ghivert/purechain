@@ -5,4 +5,5 @@ import Data.Array
 import Data.String
 
 whitepad :: Int -> String
-whitepad number = fromCharArray $ replicate number ' '
+whitepad padding =
+  fromCharArray $ replicate padding ' '

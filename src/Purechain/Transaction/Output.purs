@@ -1,7 +1,6 @@
 module Purechain.Transaction.Output where
 
 import Prelude
-
 import Crypto.Simple as Crypto
 import Data.Array (filter, foldr)
 

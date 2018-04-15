@@ -1,21 +1,20 @@
 module Purechain.Transaction where
 
-import Control.Monad.Eff
+import Prelude
 import Crypto.Simple
+import Control.Monad.Eff
+import Control.Monad.Eff.Now as Now
 import Data.DateTime.Instant
 import Data.Maybe
 import Data.Time.Duration
-import Prelude
-
-import Control.Monad.Eff.Now as Now
 import Data.Array (foldr)
 import Data.Foldable (and)
 import Data.Map as Map
 import Data.Number.Format as Format
 import Data.String as String
-import HelpMe.Buffer as HelpMe
-import Purechain.Transaction.Output (totalBalance)
+
 import Purechain.Transaction.Output as Transaction
+import HelpMe.Buffer as HelpMe
 
 newtype Transaction = Transaction
   { id :: String
@@ -80,7 +79,7 @@ sendersHaveEnoughFunds :: Array Transaction -> Array Transaction.Output -> Boole
 sendersHaveEnoughFunds transactions utxo =
   let balances = foldr accumulateBalance Map.empty transactions
       keys = map HelpMe.importFromString $ Map.keys balances
-      isBalanceSufficient key = totalBalance key utxo <= fromMaybe 0.0 (Map.lookup (toString key) balances) in
+      isBalanceSufficient key = Transaction.totalBalance key utxo <= fromMaybe 0.0 (Map.lookup (toString key) balances) in
     and $ map isBalanceSufficient keys
 
 accumulateBalance :: Transaction -> Map.Map String Number -> Map.Map String Number

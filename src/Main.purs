@@ -7,17 +7,10 @@ import Control.Monad.Eff.Console
 import Partial.Unsafe
 import Data.Array
 import Data.Maybe as Maybe
-import Text.Chalky as Colorize
 
 import Purechain
 import Purechain.Wallet as Wallet
 import HelpMe.Console as Console
-
-logYellow :: forall e. String -> Eff (console :: CONSOLE | e) Unit
-logYellow = log <<< Colorize.yellow
-
-logGreen :: forall e. String -> Eff (console :: CONSOLE | e) Unit
-logGreen = log <<< Colorize.green
 
 main :: ∀ e. Eff (console :: CONSOLE, now :: NOW | e) Unit
 main = do
@@ -27,11 +20,11 @@ main = do
   -- Generate wallets.
   firstWallet <- Wallet.newWallet
   secondWallet <- Wallet.newWallet
-  logYellow "First wallet:"
-  logGreen $ show firstWallet
+  log "First wallet:"
+  log $ show firstWallet
   Console.logNewline
-  logYellow "Second wallet:"
-  logGreen $ show secondWallet
+  log "Second wallet:"
+  log $ show secondWallet
   Console.logNewline
 
   -- Public Key of the first wallet, for better convenience.
@@ -41,14 +34,14 @@ main = do
   purechain <- genesis pubKey
 
   let firstWallet' = Wallet.addUTXO firstWallet (unsafePartial $ Maybe.fromJust $ head $ utxo purechain)
-  logYellow "First wallet after mining genesis:"
-  logGreen $ show firstWallet'
+  log "First wallet after mining genesis:"
+  log $ show firstWallet'
   Console.logNewline
 
   -- Issue a transaction from the first wallet and get it.
   firstWallet <- Wallet.issueTransaction firstWallet' (Wallet.publicKey secondWallet) 2.5
-  logYellow "First wallet after issuing transaction:"
-  logGreen $ show firstWallet
+  log "First wallet after issuing transaction:"
+  log $ show firstWallet
   let pendingTransactions = Wallet.pendingTransactions firstWallet
 
   -- Issue a new transaction by hand.
@@ -62,4 +55,4 @@ main = do
   purechain <- addBlock pubKey pendingTransactions purechain
 
   Console.logNewline
-  logGreen $ show purechain
+  log $ show purechain

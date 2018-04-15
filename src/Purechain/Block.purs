@@ -1,5 +1,7 @@
 module Purechain.Block where
 
+import Prelude
+import Crypto.Simple as Crypto
 import Control.Monad.Eff
 import Control.Monad.Eff.Console
 import Control.Monad.Eff.Now
@@ -9,11 +11,9 @@ import Data.Int
 import Data.Maybe
 import Data.Number.Format
 import Data.String
+import Data.Array (replicate)
 import Data.Time.Duration
-import Prelude
 
-import Crypto.Simple as Crypto
-import Data.Array as A
 import Purechain.Transaction (Transaction, areValid, sendersHaveEnoughFunds)
 import Purechain.Transaction.Output as Transaction
 import HelpMe.Format
@@ -89,5 +89,5 @@ mineBlock difficulty miner (Block (block @ { hash, nonce, content, timestamp, pr
 
 checkValidHash :: Int -> Crypto.Digest -> Boolean
 checkValidHash difficulty hash =
-  let target = A.replicate difficulty '0' # fromCharArray in
+  let target = replicate difficulty '0' # fromCharArray in
   take difficulty (Crypto.toString hash) == target

@@ -1,16 +1,18 @@
 module Purechain where
 
+import Prelude
+import Crypto.Simple as Crypto
 import Control.Monad.Eff
 import Control.Monad.Eff.Now
 import Data.List
-import Prelude
-import Purechain.Block
-import Crypto.Simple as Crypto
 import Data.Maybe (Maybe(..), fromJust)
-import HelpMe.Buffer (importFromString) as Buffer
 import Partial.Unsafe (unsafePartial)
+import Text.Chalky as Chalk
+
+import Purechain.Block
 import Purechain.Transaction (Transaction)
 import Purechain.Transaction.Output as Transaction
+import HelpMe.Buffer (importFromString) as Buffer
 import HelpMe.Format
 
 newtype Purechain = Purechain
@@ -24,8 +26,8 @@ utxo (Purechain { utxo }) = utxo
 instance showPurechain :: Show Purechain where
   show (Purechain { chain, utxo }) =
     "Purechain {\n"
-      <> whitepad 2 <> "chain: " <> show chain <> "\n"
-      <> whitepad 2 <> "utxo: " <> show utxo <> "\n"
+      <> whitepad 2 <> Chalk.red "chain: " <> show chain <> "\n"
+      <> whitepad 2 <> Chalk.red "utxo: " <> show utxo <> "\n"
       <> "}"
 
 difficulty :: Int
