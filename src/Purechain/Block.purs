@@ -6,13 +6,12 @@ import Control.Monad.Eff
 import Control.Monad.Eff.Console
 import Control.Monad.Eff.Now
 import Control.Monad.Eff.Unsafe
-import Data.DateTime.Instant
 import Data.Int
 import Data.Maybe
 import Data.Number.Format
 import Data.String
 import Data.Array (replicate)
-import Data.Time.Duration
+import Data.Timestamp as Timestamp
 
 import Purechain.Transaction (Transaction, areValid, sendersHaveEnoughFunds)
 import Purechain.Transaction.Output as Transaction
@@ -58,8 +57,7 @@ newBlock :: ∀ e
 newBlock content utxo previousHash =
   if areValid content then
     if sendersHaveEnoughFunds content utxo then Just $ do
-      time <- now
-      let (Milliseconds timestamp) = unInstant time
+      timestamp <- Timestamp.now
       pure $ block previousHash content timestamp 0
     else Nothing
   else Nothing
@@ -76,8 +74,7 @@ mineBlock :: Int -> Crypto.PublicKey -> Block -> Block
 mineBlock difficulty miner (Block (block @ { hash, nonce, content, timestamp, previousHash })) =
   if checkValidHash difficulty hash then
     unsafePerformEff do
-      time <- now
-      let (Milliseconds timestamp) = unInstant time
+      timestamp <- Timestamp.now
       log $ "Block mined! " <> toString timestamp
       pure $ Block block { miner = Just miner }
   else
