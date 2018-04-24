@@ -24,6 +24,7 @@ pendingTransactions :: Wallet -> Array Purechain.Transaction
 pendingTransactions (Wallet { pendingTransactions }) = pendingTransactions
 
 derive instance eqWallet :: Eq Wallet
+
 instance showWallet :: Show Wallet where
   show (Wallet { privateKey, publicKey, balance, utxo, pendingTransactions }) =
     "Wallet {\n"
